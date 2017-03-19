@@ -1,0 +1,9 @@
+
+to run with feedgnuplot for real-time histogramming:
+
+java DiskSim --dynamic 32 --histdata | ~/bin/feedgnuplot --histogram 0 --with boxes --xmin 0 --xmax 10000 --xlabel 'time' --ymin 0 --ylabel 'frequency' --binwidth 100 --stream trigger --set 'style fill solid'
+
+to generate a profile using feedgnuplot:
+
+java DiskSim --profile | ~/bin/feedgnuplot --title="Profile" --domain
+
