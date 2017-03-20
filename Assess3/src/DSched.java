@@ -58,6 +58,8 @@ public class DSched
 	private int readqueue_head;
 	private int readqueue_tail;
 	private int readqueue_size;
+	private ReadReq last;
+	private ReadReq next;
 
 
 	/*{{{  public DSched ()*/
@@ -70,6 +72,8 @@ public class DSched
 		readqueue_head = 0;
 		readqueue_tail = 0;
 		readqueue_size = 0;
+		last = null;
+		next = null;
 
 		/* allocate individual ReadReq entries */
 		for (int i=0; i<readqueue.length; i++) {
@@ -105,11 +109,18 @@ public class DSched
 			/* give the block read back to the high-level system */
 			DiskSim.highlevel_didread (blk, req);
 		}
-
+		
 		if (readqueue_size > 0) {
 			/* still got requests to service, dispatch the next block request (at tail) */
-			DiskSim.disk_readblock (readqueue[readqueue_tail].blk, readqueue[readqueue_tail].req);
-
+			if(last != null){
+				for(int a=0; a < readqueue.length; a++) {
+					
+				}
+			} else {
+				next = readqueue[readqueue_tail];
+			}
+			DiskSim.disk_readblock (next.blk, next.req);
+			
 			/* increment tail pointer, modulo buffer size */
 			readqueue_tail = (readqueue_tail + 1) % DiskSim.MAXREQUESTS;
 			readqueue_size--;
