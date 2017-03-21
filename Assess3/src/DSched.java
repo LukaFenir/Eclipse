@@ -52,15 +52,43 @@ public class DSched
 		}
 	}
 	/*}}}*/
+	
+	/*}}}*/
+
+	/*{{{  private class LastNext*/
+	/*
+	 *	structure to hold last or next requests
+	 */
+	private class LastNext
+	{
+		int index;		/* index of request */
+		ReadReq lnReq;		/* request info */
+		//int fun = 10;
+
+		/* constructor: just clear fields */
+		public LastNext ()
+		{
+			index = 0;
+			lnReq = null;
+		}
+	}
+	/*}}}*/
 
 	/* Private state */
 	private ReadReq readqueue[];
 	private int readqueue_head;
 	private int readqueue_tail;
 	private int readqueue_size;
-	private ReadReq last;
-	private ReadReq next;
-
+	//private ReadReq last;
+	//private ReadReq next; Replace with next1
+	private LastNext next;
+	private LastNext last1;
+	int head;
+	int track;
+	int sector;
+	int h;
+	int t;
+	int s;
 
 	/*{{{  public DSched ()*/
 	/*
@@ -72,8 +100,10 @@ public class DSched
 		readqueue_head = 0;
 		readqueue_tail = 0;
 		readqueue_size = 0;
-		last = null;
-		next = null;
+		//last = null;
+		//next = null; replace next with next1
+		next = new LastNext();
+		last1 = null;
 
 		/* allocate individual ReadReq entries */
 		for (int i=0; i<readqueue.length; i++) {
@@ -89,7 +119,7 @@ public class DSched
 	public void blockread (int blk, BRequest req)
 	{
 		/* add the request to the head of the queue */
-		readqueue[readqueue_head].blk = blk;
+		readqueue[readqueue_head].blk = blk; ///////
 		readqueue[readqueue_head].req = req;
 
 		/* increment head pointer (modulo buffer size) */
@@ -111,21 +141,35 @@ public class DSched
 		}
 		
 		if (readqueue_size > 0) {
-			/* still got requests to service, dispatch the next block request (at tail) */
-			if(last != null){
+			/* still got requests to service, dispatch the next block request (at tail) */	
+			if(last1 == null){
+				next.lnReq = readqueue[readqueue_tail];
+				//head = DiskSim.block_to_head(last1.lnReq.blk);
+				//track = DiskSim.block_to_track(last1.lnReq.blk);
+				//sector = DiskSim.block_to_sector(last1.lnReq.blk);
+				System.out.println(head + " " + track + " " + sector);
 				for(int a=0; a < readqueue.length; a++) {
-					
+					h = DiskSim.block_to_head(readqueue[a].blk);
+					t = DiskSim.block_to_track(readqueue[a].blk);
+					s = DiskSim.block_to_sector(readqueue[a].blk);	
+					if(true) {
+						
+					}
 				}
-			} else {
-				next = readqueue[readqueue_tail];
+				System.out.println(readqueue[readqueue_head].blk);
+				//next.lnReq = readqueue[readqueue_head];
+			} else {			
+				//next = readqueue[readqueue_tail]; Revert line 147 to DiskSim.disk_readblock (next.blk, next.req);
+				next.lnReq = readqueue[readqueue_tail];
 			}
-			DiskSim.disk_readblock (next.blk, next.req);
+			
+			DiskSim.disk_readblock (next.lnReq.blk, next.lnReq.req);
 			
 			/* increment tail pointer, modulo buffer size */
 			readqueue_tail = (readqueue_tail + 1) % DiskSim.MAXREQUESTS;
 			readqueue_size--;
+			//last1 = next;
 		}
 	}
 	/*}}}*/
 }
-
