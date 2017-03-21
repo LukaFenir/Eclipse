@@ -70,6 +70,7 @@ public class DSched
 	private int t;
 	private int s;
 	private int direction; // 0 = null, 1 = up blocks, -1 = down blocks
+	private int dist;
 
 
 	/*{{{  public DSched ()*/
@@ -88,6 +89,7 @@ public class DSched
 		track = 0;
 		sector = 0;
 		direction = 0;
+		dist = 0;
 
 		/* allocate individual ReadReq entries */
 		for (int i=0; i<readqueue.length; i++) {
@@ -134,16 +136,26 @@ public class DSched
 				head = DiskSim.block_to_head(readqueue[a].blk);
 				track = DiskSim.block_to_track(readqueue[a].blk);
 				sector = DiskSim.block_to_sector(readqueue[a].blk);
+				dist = h - head;
 				switch (direction) {
 				case 0:
+					next = readqueue[readqueue_tail];
+					if(dist > 0){ //dist is positive, direction is down//what about for 0?
+						direction = -1;
+					}
+					else if(dist < 0) { //dist is negative, direction is up
+						direction = 1;
+					}
 					break;
 				case 1:
+					next = readqueue[readqueue_tail];
 					break;
 				case -1:
+					next = readqueue[readqueue_tail];
 					break;
 				}
 			}
-			next = readqueue[readqueue_tail];/////readqueue[readqueue_tail] needs changing 
+			/////readqueue[readqueue_tail] needs changing 
 			DiskSim.disk_readblock (next.blk, next.req);
 			
 			/* increment tail pointer, modulo buffer size */
