@@ -43,12 +43,14 @@ public class DSched
 	{
 		int blk;		/* block number */
 		BRequest req;		/* request info */
+		int index;
 
 		/* constructor: just clear fields */
 		public ReadReq ()
 		{
 			blk = -1;
 			req = null;
+			index = 0;
 		}
 	}
 	/*}}}*/
@@ -60,6 +62,14 @@ public class DSched
 	private int readqueue_size;
 	private ReadReq last;
 	private ReadReq next;
+	private int index;
+	private int head;
+	private int track;
+	private int sector;
+	private int h;
+	private int t;
+	private int s;
+	private int direction; // 0 = null, 1 = up blocks, -1 = down blocks
 
 
 	/*{{{  public DSched ()*/
@@ -74,10 +84,15 @@ public class DSched
 		readqueue_size = 0;
 		last = null;
 		next = null;
+		head = 0;
+		track = 0;
+		sector = 0;
+		direction = 0;
 
 		/* allocate individual ReadReq entries */
 		for (int i=0; i<readqueue.length; i++) {
 			readqueue[i] = new ReadReq ();
+			readqueue[i].index = i;
 		}
 	}
 	/*}}}*/
@@ -112,18 +127,29 @@ public class DSched
 		
 		if (readqueue_size > 0) {
 			/* still got requests to service, dispatch the next block request (at tail) */
-			if(last != null){
-				for(int a=0; a < readqueue.length; a++) {
-					
+			h = DiskSim.block_to_head(blk);
+			t = DiskSim.block_to_track(blk);
+			s = DiskSim.block_to_sector(blk);
+			for(int a=0; a < readqueue.length; a++) {
+				head = DiskSim.block_to_head(readqueue[a].blk);
+				track = DiskSim.block_to_track(readqueue[a].blk);
+				sector = DiskSim.block_to_sector(readqueue[a].blk);
+				switch (direction) {
+				case 0:
+					break;
+				case 1:
+					break;
+				case -1:
+					break;
 				}
-			} else {
-				next = readqueue[readqueue_tail];
 			}
+			next = readqueue[readqueue_tail];/////readqueue[readqueue_tail] needs changing 
 			DiskSim.disk_readblock (next.blk, next.req);
 			
 			/* increment tail pointer, modulo buffer size */
 			readqueue_tail = (readqueue_tail + 1) % DiskSim.MAXREQUESTS;
 			readqueue_size--;
+			last = next;
 		}
 	}
 	/*}}}*/
