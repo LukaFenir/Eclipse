@@ -70,7 +70,8 @@ public class DSched
 	private int t;
 	private int s;
 	private int direction; // 0 = null, 1 = up blocks, -1 = down blocks
-	private int dist;
+	private int dist; //distance between block and current array block
+	private int distPrev; //last dist
 
 
 	/*{{{  public DSched ()*/
@@ -107,8 +108,9 @@ public class DSched
 	{
 		/* add the request to the head of the queue */
 		readqueue[readqueue_head].blk = blk;
+		int add = readqueue[readqueue_head].blk;
 		readqueue[readqueue_head].req = req;
-
+		System.out.println("Block added "+ add + " to array "+readqueue_head+" Track "+DiskSim.block_to_head(add));
 		/* increment head pointer (modulo buffer size) */
 		readqueue_head = (readqueue_head + 1) % DiskSim.MAXREQUESTS;
 		readqueue_size++;
@@ -125,36 +127,48 @@ public class DSched
 		if (blk >= 0) {
 			/* give the block read back to the high-level system */
 			DiskSim.highlevel_didread (blk, req);
+			System.out.println("Read block "+blk+ " track "+DiskSim.block_to_track(blk));
 		}
 		
 		if (readqueue_size > 0) {
 			/* still got requests to service, dispatch the next block request (at tail) */
-			h = DiskSim.block_to_head(blk);
 			t = DiskSim.block_to_track(blk);
-			s = DiskSim.block_to_sector(blk);
-			for(int a=0; a < readqueue.length; a++) {
-				head = DiskSim.block_to_head(readqueue[a].blk);
-				track = DiskSim.block_to_track(readqueue[a].blk);
-				sector = DiskSim.block_to_sector(readqueue[a].blk);
-				dist = h - head;
-				switch (direction) {
-				case 0:
-					next = readqueue[readqueue_tail];
-					if(dist > 0){ //dist is positive, direction is down//what about for 0?
-						direction = -1;
-					}
-					else if(dist < 0) { //dist is negative, direction is up
-						direction = 1;
-					}
-					break;
-				case 1:
-					next = readqueue[readqueue_tail];
-					break;
-				case -1:
-					next = readqueue[readqueue_tail];
-					break;
+			switch (direction) {
+			case 0:
+				next = readqueue[readqueue_tail];
+				t = DiskSim.block_to_track(readqueue[readqueue_tail].blk);//t and track are correct
+				track = DiskSim.block_to_track(readqueue[readqueue_tail].blk);
+				dist = t - track;
+				System.out.println("Change direction, dist "+dist);
+				if(dist > 0){ //dist is positive, direction is down//what about for 0?
+					direction = -1;
+					
 				}
+				else if(dist < 0) { //dist is negative, direction is up
+					direction = 1;
+				}
+				break;
+			case 1:
+				if(dist > distPrev) {
+				System.out.println(dist+" dist | Previous dist "+distPrev);
+				next = readqueue[readqueue_tail];
+				
+				}
+				break;
+			case -1:
+				if(dist < distPrev) {
+				System.out.println(dist+" dist | Previous dist "+distPrev);
+				next = readqueue[readqueue_tail];
+				System.out.println("Allocated next, case -1");
+				
+				}
+				break;
 			}
+			distPrev = dist;
+
+			//for(int a=readqueue_tail; a < readqueue.length; a++) {
+
+			//}
 			/////readqueue[readqueue_tail] needs changing 
 			DiskSim.disk_readblock (next.blk, next.req);
 			
